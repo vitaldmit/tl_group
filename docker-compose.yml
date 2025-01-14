@@ -1,0 +1,98 @@
+# Версия синтаксиса docker-compose
+version: '3'
+
+# Определение сервисов
+services:
+  # Сервис для Django приложения
+  tl_group_web:
+    # Сборка образа из текущей директории
+    build: .
+    # Команда для запуска Django приложения через Gunicorn
+    command: >
+      sh -c "pip install -U pip
+      && python manage.py collectstatic --noinput
+      && python manage.py migrate
+      && gunicorn tl_group_project.wsgi:application --bind 0.0.0.0:8000"
+    # Монтирование локальной директории в контейнер
+    volumes:
+      - .:/app
+      - tl_group_static_volume:/app/static_collected
+    # Открытие порта 8000 внутри Docker network
+    expose:
+      - 8000
+    # Загрузка переменных окружения из файла .env
+    env_file:
+      - .env
+    # Зависимость от сервиса базы данных
+    depends_on:
+      - tl_group_db
+      - tl_group_certbot
+
+  # Сервис для базы данных PostgreSQL
+  tl_group_db:
+    # Использование официального образа PostgreSQL
+    image: postgres:latest
+    # Монтирование volume для сохранения данных
+    volumes:
+      - tl_group_postgres_data:/var/lib/postgresql/data/
+    # Загрузка переменных окружения из файла .env
+    env_file:
+      - .env
+
+  # Сервис для Nginx
+  tl_group_nginx:
+    # Использование официального образа Nginx
+    image: nginx:latest
+    # Проброс порта 80 из контейнера на хост
+    ports:
+      - 80:80
+      - 443:443
+    # Монтирование конфигурационного файла Nginx и статических файлов
+    volumes:
+        # Необходимо выбрать конфигурацию для NGINX - nginx.conf или nginx-ssl.conf
+      - ./configs/nginx.conf:/etc/nginx/conf.d/tl_group_project.conf
+      - tl_group_static_volume:/app/static_collected
+      - tl_group_media_volume:/app/media
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    restart: unless-stopped
+    # Зависимость от сервиса Django приложения
+    depends_on:
+      - tl_group_web
+
+  # Сервис Certbot для Let's Encrypt
+  tl_group_certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+# Определение volumes
+volumes:
+  # Volume для хранения данных PostgreSQL
+  tl_group_postgres_data:
+  # Volume для хранения статических файлов
+  tl_group_static_volume:
+  # Volume для хранения media файлов
+  tl_group_media_volume:
+
+
+# Для мониторинга можно добавить Prometheus и Grafana:
+#   prometheus:
+#     image: prom/prometheus
+#     volumes:
+#       - ./prometheus:/etc/prometheus
+#     ports:
+#       - 9090:9090
+
+#   grafana:
+#     image: grafana/grafana
+#     ports:
+#       - 3000:3000
+#     volumes:
+#       - grafana_data:/var/lib/grafana
+
+# volumes:
+#   grafana_data:
