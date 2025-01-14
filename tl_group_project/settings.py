@@ -38,7 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
     'apps.main',
+    'apps.employee',
+    'mptt',
+    'django_bootstrap5',
+    'django.contrib.humanize',
 ]
 
 MIDDLEWARE = [
@@ -92,7 +97,11 @@ else:
             'USER': os.environ.get('DB_USER'),
             'PASSWORD': os.environ.get('DB_PASSWORD'),
             'HOST': os.environ.get('DB_HOST'),
-            'PORT': '5432'
+            'PORT': '5432',
+            'CONN_MAX_AGE': 60,
+            'OPTIONS': {
+                'MAX_CONNS': 100
+            }
         }
     }
 

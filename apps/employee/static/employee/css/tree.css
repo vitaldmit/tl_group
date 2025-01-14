@@ -1,0 +1,85 @@
+.department-tree {
+    padding: 20px;
+}
+
+.department-tree ul {
+    list-style: none;
+    padding-left: 20px;
+}
+
+.department-tree li {
+    margin: 15px 0;
+    padding: 10px;
+    border-left: 3px solid #0d6efd;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.department-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.department-name {
+    font-size: 1.1rem;
+    color: #0d6efd;
+}
+
+.employees-list {
+    margin: 10px 0;
+    padding: 10px;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.employee-item {
+    padding: 8px;
+    margin: 5px 0;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.employee-details {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.employee-position {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.department-stats {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-left: auto;
+}
+
+.employee-salary {
+    color: #198754;
+    font-weight: 500;
+    margin-left: 15px;
+}
+  .department-toggle i {
+      display: inline-block;
+      transition: transform 0.3s ease;
+  }
+
+  .department-toggle {
+      padding: 0;
+      color: #0d6efd;
+  }
+
+  .department-toggle:hover {
+      color: #0a58ca;
+  }
+
+  .department-toggle[aria-expanded="true"] .bi-chevron-right {
+      transform: rotate(90deg);
+  }

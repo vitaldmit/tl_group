@@ -1,0 +1,159 @@
+{% extends 'employee/base.html' %}
+{% load mptt_tags %}
+{% load humanize %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">Структура организации</h3>
+                    <small>Всего сотрудников: {{ employees_total }}</small>
+                </div>
+                <button id="toggleAll" class="btn btn-light btn-sm">
+                    <i class="bi bi-arrows-expand"></i> Развернуть все
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="department-tree">
+                    <ul>
+                    {% recursetree departments %}
+                        <li>
+                            <div class="department-header">
+                                <span class="department-name">{{ node.name }}</span>
+                                <span class="department-stats">
+                                    Сотрудников: {{ node.employees.count }}
+                                </span>
+                                {% if node.employees.count %}
+                                    <button class="btn btn-sm btn-outline-primary load-employees" 
+                                            data-department-id="{{ node.id }}"
+                                            data-bs-toggle="collapse" 
+                                            data-bs-target="#emp{{ node.id }}"
+                                            aria-expanded="false">
+                                        <i class="bi bi-people-fill"></i> Показать сотрудников ({{ node.employees.count }})
+                                    </button>
+                                {% endif %}
+                            </div>
+                            
+                            {% if node.employees.count %}
+                                <div class="collapse" id="emp{{ node.id }}">
+                                    <div class="employees-list" id="employees-{{ node.id }}">
+                                        <div class="text-center">
+                                            <div class="spinner-border text-primary d-none" role="status">
+                                                <span class="visually-hidden">Загрузка...</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if not node.is_leaf_node %}
+                                <div class="collapse" id="dept{{ node.id }}">
+                                    <ul>
+                                        {{ children }}
+                                    </ul>
+                                </div>
+                                <button class="btn btn-sm btn-link department-toggle" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#dept{{ node.id }}"
+                                        aria-expanded="false">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                            {% endif %}
+                        </li>
+                    {% endrecursetree %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let isExpanded = false;
+    const toggleButton = document.getElementById('toggleAll');
+    
+    toggleButton.addEventListener('click', function() {
+        const allCollapsible = document.querySelectorAll('.collapse');
+        isExpanded = !isExpanded;
+        
+        allCollapsible.forEach(element => {
+            if (isExpanded) {
+                element.classList.add('show');
+                toggleButton.innerHTML = '<i class="bi bi-arrows-collapse"></i> Свернуть все';
+            } else {
+                element.classList.remove('show');
+                toggleButton.innerHTML = '<i class="bi bi-arrows-expand"></i> Развернуть все';
+            }
+        });
+    });
+
+    document.querySelectorAll('.collapse').forEach(collapse => {
+        collapse.addEventListener('show.bs.collapse', event => {
+            const button = document.querySelector(`[data-bs-target="#${event.target.id}"]`);
+            if (button && button.querySelector('i')) {
+                button.querySelector('i').style.transform = 'rotate(90deg)';
+            }
+        });
+
+        collapse.addEventListener('hide.bs.collapse', event => {
+            const button = document.querySelector(`[data-bs-target="#${event.target.id}"]`);
+            if (button && button.querySelector('i')) {
+                button.querySelector('i').style.transform = 'rotate(0deg)';
+            }
+        });
+    });
+    
+    // Load employees with pagination
+    document.querySelectorAll('.load-employees').forEach(button => {
+        button.addEventListener('click', function() {
+            const departmentId = this.dataset.departmentId;
+            const container = document.querySelector(`#employees-${departmentId}`);
+            const spinner = container.querySelector('.spinner-border');
+            
+            if (!container.dataset.loaded) {
+                spinner.classList.remove('d-none');
+                
+                fetch(`/employee/load-employees/${departmentId}/?page=1`)
+                    .then(response => response.json())
+                    .then(data => {
+                        container.innerHTML = data.html;
+                        container.dataset.loaded = 'true';
+                        initLoadMoreButtons();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        container.innerHTML = '<div class="alert alert-danger">Ошибка загрузки данных</div>';
+                    })
+                    .finally(() => {
+                        spinner.classList.add('d-none');
+                    });
+            }
+        });
+    });
+
+    function initLoadMoreButtons() {
+        document.querySelectorAll('.load-more').forEach(button => {
+            button.addEventListener('click', function() {
+                const departmentId = this.dataset.departmentId;
+                const nextPage = this.dataset.nextPage;
+                const container = document.querySelector(`#employees-${departmentId}`);
+                
+                fetch(`/employee/load-employees/${departmentId}/?page=${nextPage}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        this.parentElement.remove();
+                        container.insertAdjacentHTML('beforeend', data.html);
+                        initLoadMoreButtons();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% load humanize %}
+
+{% for employee in employees %}
+    <div class="employee-item">
+        <div class="employee-details">
+            <i class="bi bi-person"></i>
+            <strong>{{ employee.full_name }}</strong>
+            <span class="employee-position">{{ employee.position }}</span>
+            <span class="employee-salary">{{ employee.salary|intcomma }} ₽</span>
+        </div>
+        <div class="employee-hire-date">
+            <small>Работает с {{ employee.hire_date|date:"d.m.Y" }}</small>
+        </div>
+    </div>
+{% endfor %}
+
+{% if has_more %}
+    <div class="text-center mt-3">
+        <button class="btn btn-outline-primary load-more" 
+                data-department-id="{{ department_id }}"
+                data-next-page="{{ next_page }}">
+            Загрузить еще
+        </button>
+    </div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Existing toggle code remains...
+
+    // Load employees with pagination
+    document.querySelectorAll('.load-employees').forEach(button => {
+        button.addEventListener('click', function() {
+            const departmentId = this.dataset.departmentId;
+            const container = document.querySelector(`#employees-${departmentId}`);
+            const spinner = container.querySelector('.spinner-border');
+            
+            if (!container.dataset.loaded) {
+                spinner.classList.remove('d-none');
+                
+                fetch(`/employee/load-employees/${departmentId}/?page=1`)
+                    .then(response => response.json())
+                    .then(data => {
+                        container.innerHTML = data.html;
+                        container.dataset.loaded = 'true';
+                        initLoadMoreButtons();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        container.innerHTML = '<div class="alert alert-danger">Ошибка загрузки данных</div>';
+                    })
+                    .finally(() => {
+                        spinner.classList.add('d-none');
+                    });
+            }
+        });
+    });
+
+    function initLoadMoreButtons() {
+        document.querySelectorAll('.load-more').forEach(button => {
+            button.addEventListener('click', function() {
+                const departmentId = this.dataset.departmentId;
+                const nextPage = this.dataset.nextPage;
+                const container = document.querySelector(`#employees-${departmentId}`);
+                
+                fetch(`/employee/load-employees/${departmentId}/?page=${nextPage}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        this.parentElement.remove();
+                        container.insertAdjacentHTML('beforeend', data.html);
+                        initLoadMoreButtons();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            });
+        });
+    }
+});
+</script>
