@@ -1,0 +1,6 @@
+django
+django-mptt
+django_bootstrap5
+python-dotenv
+gunicorn
+psycopg2-binary

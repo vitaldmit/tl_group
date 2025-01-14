@@ -1,0 +1,4 @@
+django
+python-dotenv
+django-mptt
+django_bootstrap5
