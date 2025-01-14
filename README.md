@@ -12,7 +12,7 @@ cd src
 
 2. Клонируйте репозиторий:
 ```bash
-https://github.com/vitaldmit/tl_group.git .
+git clone https://github.com/vitaldmit/tl_group.git .
 ```
 
 3. Установите зависимости:
@@ -39,3 +39,5 @@ python manage.py runserver
 
 ## Скриншот
 ![2025-01-14_19-23](https://github.com/user-attachments/assets/67d3dbe4-705e-4c42-8cd4-c9845c9ab9cb)
+
+Проект сделан на основе [django_template](https://github.com/vitaldmit/django_template)
