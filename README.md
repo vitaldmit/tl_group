@@ -36,3 +36,6 @@ python manage.py runserver
 ```
 
 7. Перейдите по адресу [http://127.0.0.1:8000/employee/](http://127.0.0.1:8000/employee/)
+
+## Скриншот
+![2025-01-14_19-23](https://github.com/user-attachments/assets/67d3dbe4-705e-4c42-8cd4-c9845c9ab9cb)
